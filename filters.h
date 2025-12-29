@@ -44,7 +44,7 @@ namespace ivantsov
                 {
                     if (w > std::numbers::inv_pi_v<T>)
                     {
-                        sigma = (T {0.519355108} * w * w - T {0.2251345831}) / (w * w - T {0.5514625429});
+                        sigma = T {0.408249999896} * (T {0.0584335750974} - w * w) / (T {0.0459329400275} - w * w);
                     }
                 }
                 update_blocks();
@@ -120,9 +120,9 @@ namespace ivantsov
                 w = fs / (std::numbers::sqrt2_v<T> * std::numbers::pi_v<T> * x);
                 if constexpr (Warp == Warp::Sigma)
                 {
-                    if (w > T {1} / (std::numbers::sqrt2_v<T> * std::numbers::pi_v<T>) )
+                    if (w > std::numbers::inv_pi_v<T> * std::numbers::sqrt2_v<T>)
                     {
-                        sigma = (T {0.7344790372} * w * w - T {0.3183883807}) / (w * w - T {0.5514625429});
+                        sigma = T {0.577352686692} * (T {0.116867150195} - w * w) / (T {0.091865880055} - w * w);
                     }
                 }
                 update_blocks();
