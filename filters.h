@@ -57,6 +57,13 @@ namespace ivantsov
                 update_blocks();
             }
 
+            auto magnitude(const auto x) // x := cos(2pi f / fs).
+            {
+                const auto F {[x](const auto a) { return T {0.5} + (a * a - a) * (T {1} - x); }};
+                return Type == HighPass ? std::sqrt((T {1} - x) / F(T {1} / b[0])) * b[1]
+                                        : std::sqrt(F(b[1]) / F(T {1} / b[0])) * (Type == LowShelf ? b[2] : T {1});
+            }
+
         private:
             auto update_blocks()
             {
@@ -129,6 +136,18 @@ namespace ivantsov
             {
                 sigma = x / (sqrt2_v<T> * pi_v<T>);
                 update_blocks();
+            }
+
+            double magnitude(const auto x) // x := cos(2pi f / fs).
+            {
+                const auto F {[x](const auto a, const auto b) {
+                    return T {1} + x + (T {1} - x) * (b * b + T {2} * a * (a - b - T {1}) * (T {1} + x));
+                }};
+                const auto F1 {[x](const auto a) { return (T {1} - x) * (T {0.5} + (a * a - a) * (T {1} - x)); }};
+                const auto den {F(T {1} / b[0], b[1] * b[1])};
+                return Type == HighPass ? std::sqrt(T {2} / den) * (T {1} - x) * b[3]
+                     : Type == BandPass ? std::sqrt(F1(sigma / sqrt2_v<T> + T {0.5}) / den) * T {4} * w * zeta
+                                        : std::sqrt(F(b[3], b[1] * b[2]) / den) * (Type == LowShelf ? b[2] : T {1});
             }
 
         private:
