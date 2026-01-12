@@ -147,7 +147,7 @@ namespace ivantsov
                 const auto den {F(T {1} / b[0], b[1] * b[1])};
                 return Type == HighPass ? std::sqrt(T {2} / den) * (T {1} - x) * b[3]
                      : Type == BandPass ? std::sqrt(F1(sigma / sqrt2_v<T> + T {0.5}) / den) * T {4} * w * zeta
-                                        : std::sqrt(F(b[3], b[1] * b[2]) / den) * (Type == LowShelf ? b[2] : T {1});
+                                        : std::sqrt(F(b[3], b[1] * b[2]) / den) * (Type == LowShelf ? b[4] : T {1});
             }
 
         private:
