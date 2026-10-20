@@ -1,43 +1,43 @@
 # ivantsov-filters
 
-Fast first and second order decramped IIR filters suited for audio rate modulation. 
-Requires C++20. 
+C++20 decramped IIR filters with configurable order and audio rate modulation.
 
 ## Example
 
+Use scalar or SIMD sample types.
+
 ```cpp
 #include "filters.h"
+#include <cmath>
+#include <numbers>
+#include <xsimd/xsimd.hpp> // For the xsimd example.
 
-template<std::floating_point T>
-struct StereoSample
-{
-    T left;
-    T right;
+auto main() -> int {
+     using namespace ivantsov;
+     using namespace ivantsov::Linear;
+     using Sample = double; // Or xsimd::batch<double>.
 
-    // operator overloading required for the is_algebraic concept
-    StereoSample operator+(const StereoSample x) const { return {left + x.left, right + x.right}; }
-    StereoSample operator-(const StereoSample x) const { return {left - x.left, right - x.right}; }
-    StereoSample operator+(const T x) const { return {left + x, right + x}; }
-    StereoSample operator-(const T x) const { return {left - x, right - x}; }
-    StereoSample operator*(const T x) const { return {left * x, right * x}; }
-};
+     Filter<HighShelf, 2, Sample, Correction::Sigma> high_shelf {};
+     high_shelf.initialise(44'100.0);
+     high_shelf.set<Fc, Zeta, Gain>(1'000.0, 0.71, 2.0);
 
-int main()
-{
-    using namespace ivantsov::Linear; 
-    SecondOrder::HighShelf<float, StereoSample<float>, ivantsov::Warp::Sigma> high_shelf {};
-    high_shelf.initialize(44'100.0f); // sets the sampling rate in Hz
-    high_shelf.set_fc(100.0f); // sets the cutoff frequeny in Hz
-    high_shelf.set_damping(0.71f); // sets the damping (1.0f / (2.0f * Q))
-    high_shelf.set_g(2.0f); // sets the gain (2.0f == 6dB) 
-    const auto [left, right] {high_shelf.processed(StereoSample {1.0f, 1.0f})};
-    high_shelf.reset(); // resets the states
-    
-    // computes the magnitude response at 10Hz. 
-    const auto magnitude {high_shelf.magnitude(std::cos(2.0 * pi * 10.0 / 44'100.0))}
+     const auto y {high_shelf.processed(Sample {1.0})};
+     const auto magnitude {high_shelf.magnitude(std::cos(2 * std::numbers::pi_v<double> * 1'000.0 / 44'100.0))};
+
+     high_shelf.reset();
 }
 ```
 
+## Parameters
+
+`Fc` is the cutoff frequency in Hz. `Gain` is the shelf gain (2 ≈ +6 dB). For orders above 1, `Zeta` sets damping as `1 / (2 * Q)`.
+
+`magnitude(x)` returns the magnitude response and takes `x = cos(2 * pi * f / fs)`, where `f` is the frequency in Hz and `fs` is the sample rate in Hz.
+
+`BandPass`, `BandStop`, and `BandShelf` require an even order.
+
 ## References
-1) Yuriy Ivantsov, “On the ideal bilinear and biquadratic digital filter.” [Online]. Available: https://ivantsovy.com/research/paper1.pdf
-2) Yuriy Ivantsov, “On the state space of a linear digital filter.” [Online]. Available: https://ivantsovy.com/research/paper2.pdf
+
+Yuriy Ivantsov, [On the ideal bilinear and biquadratic digital filter](https://ivantsovy.com/research/paper1.pdf).
+
+Yuriy Ivantsov, [On the state space of a linear digital filter](https://ivantsovy.com/research/paper2.pdf).
